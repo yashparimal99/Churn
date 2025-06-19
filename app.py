@@ -7,7 +7,8 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
 # Load trained RandomForestClassifier model
-model = pickle.load(open(r"C:\QuantumSoft\Churn\RFC_Model", "rb"))
+# model = pickle.load(open(r"C:\QuantumSoft\Churn\RFC_Model", "rb"))
+model = pickle.load(open("RFC_Model.pkl", "rb"))
 
 # Define features
 numerical_features = ['tenure', 'MonthlyCharges', 'TotalCharges']

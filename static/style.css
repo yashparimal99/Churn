@@ -109,6 +109,22 @@ input[type="submit"]:hover {
     font-size: 18px;
 }
 
+/* Retention Action List Items */
+.results ul {
+    list-style-position: inside;
+    padding: 0;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.results ul li {
+    display: inline-block;
+    text-align: center;
+    margin: 5px 10px;
+    font-size: 16px;
+}
+
+
 /* LIME Explanation Frame */
 .lime-container {
     margin-top: 30px;
@@ -118,10 +134,11 @@ input[type="submit"]:hover {
     margin-bottom: 15px;
 }
 
-iframe {
-    width: 100%;
-    height: 500px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    background: #fff;
+.lime-box {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 8px;
 }

@@ -3,4 +3,5 @@ pandas
 numpy
 scikit-learn
 lime
+shap
 Gunicorn

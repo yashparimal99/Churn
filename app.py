@@ -5,16 +5,18 @@ import lime
 import lime.lime_tabular
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+import shap
+import os
+from shap import Explanation
 
 # Load trained RandomForestClassifier model
-# model = pickle.load(open(r"C:\QuantumSoft\Churn\RFC_Model", "rb"))
 model = pickle.load(open("RFC_Model", "rb"))
 
 # Define features
 numerical_features = ['tenure', 'MonthlyCharges', 'TotalCharges']
 categorical_features = ['Contract', 'TechSupport', 'OnlineSecurity', 'InternetService',
-                        'PaymentMethod', 'DeviceProtection',
-                        'OnlineBackup', 'StreamingMovies', 'StreamingTV']
+                      'PaymentMethod', 'DeviceProtection',
+                      'OnlineBackup', 'StreamingMovies', 'StreamingTV']
 feature_names = numerical_features + categorical_features
 
 # Load raw training data
@@ -28,12 +30,15 @@ for col in categorical_features:
     le.fit(X_train_raw[col].astype(str))
     label_encoders[col] = le
 
-# Preprocess training data for LIME
+# Preprocess training data for LIME and SHAP
 X_train_processed = X_train_raw[feature_names].copy()
 X_train_processed[numerical_features] = X_train_processed[numerical_features].apply(pd.to_numeric, errors='coerce')
 X_train_processed.dropna(inplace=True)
 for col in categorical_features:
     X_train_processed[col] = label_encoders[col].transform(X_train_processed[col].astype(str))
+
+# Initialize SHAP explainer
+shap_explainer = shap.TreeExplainer(model)
 
 # Rule-based logic function
 def rule_based_risk(form_data):
@@ -73,6 +78,49 @@ def rule_based_risk(form_data):
     else:
         return "Low"
 
+# Function to generate SHAP force plot HTML
+def generate_shap_plot(input_df):
+    # Calculate SHAP values
+    shap_values = shap_explainer.shap_values(input_df)
+    
+    # For binary classification, we'll use the SHAP values for class 1 (churn)
+    if isinstance(shap_values, list):
+        shap_values = shap_values[1]
+        base_value = shap_explainer.expected_value[1]
+    else:
+        base_value = shap_explainer.expected_value
+    
+    # Create force plot
+    force_plot = shap.force_plot(
+        base_value=base_value,
+        shap_values=shap_values[0],
+        features=input_df.iloc[0],
+        feature_names=feature_names,
+        matplotlib=False,
+        show=False
+    )
+    
+    # Save to temporary HTML file with UTF-8 encoding
+    temp_file = 'temp_shap.html'
+    shap.save_html(temp_file, force_plot)
+    
+    # Read the HTML content with UTF-8 encoding
+    try:
+        with open(temp_file, 'r', encoding='utf-8') as file:
+            shap_html = file.read()
+    except UnicodeDecodeError:
+        # Fallback to latin-1 if UTF-8 fails (though it shouldn't with SHAP output)
+        with open(temp_file, 'r', encoding='latin-1') as file:
+            shap_html = file.read()
+    
+    # Delete the temporary file
+    try:
+        os.remove(temp_file)
+    except:
+        pass
+    
+    return shap_html
+
 # Flask app
 app = Flask(__name__)
 
@@ -101,16 +149,13 @@ def predict():
         risk_score = model.predict_proba(input_df)[0][1]
         risk_category = "High" if risk_score > 0.7 else "Medium" if risk_score > 0.3 else "Low"
 
-
         if risk_score > 0.7:
-            retention_action =['Grant loyalty benefits','Offer cashback offers','Schedule agent call to customer']
-        elif risk_score >0.3:
-            retention_action=['Grant loyalty points']
+            retention_action = ['Grant loyalty benefits', 'Offer cashback offers', 'Schedule agent call to customer']
+        elif risk_score > 0.3:
+            retention_action = ['Grant loyalty points']
         else:
-            retention_action=['No Action Required']
+            retention_action = ['No Action Required']
 
-
-        
         # Rule-based category
         rule_based_category = rule_based_risk(request.form)
 
@@ -129,12 +174,16 @@ def predict():
         )
         lime_html = explanation.as_html()
 
+        # SHAP explanation
+        shap_html = generate_shap_plot(input_df)
+
         return render_template("index.html",
-                               risk_score=round(risk_score * 100, 2),
-                               risk_category=risk_category,
-                               retention_actions=retention_action,
-                               rule_based_category=rule_based_category,
-                               lime_html=lime_html)
+                           risk_score=round(risk_score * 100, 2),
+                           risk_category=risk_category,
+                           retention_actions=retention_action,
+                           rule_based_category=rule_based_category,
+                           lime_html=lime_html,
+                           shap_html=shap_html)
 
     except Exception as e:
         return f"Error: {str(e)}"

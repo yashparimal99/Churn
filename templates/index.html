@@ -5,6 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Churn Risk Predictor</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .explanation-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .explanation-title {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .shap-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .shap-plot {
+            width: 100%;
+            overflow-x: auto;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -152,11 +176,22 @@
                 {% endif %}
             </div>
 
-            <div class="lime-container">
-                <h3>Prediction Explanation</h3>
-                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #f9f9f9;">
+            <div class="explanation-container">
+                <h3 class="explanation-title">LIME Explanation (Local Interpretable Model-agnostic Explanations)</h3>
+                <div style="max-height: 400px; overflow-y: auto;">
                     {{ lime_html | safe }}
                 </div>
+            </div>
+
+            <div class="shap-container">
+                <h3 class="explanation-title">SHAP Explanation (SHapley Additive exPlanations)</h3>
+                <div class="shap-plot">
+                    {{ shap_html | safe }}
+                </div>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                    SHAP values show how each feature contributes to the prediction. Features in red increase the risk of churn, 
+                    while features in blue decrease it. The base value is the average prediction.
+                </p>
             </div>
         {% endif %}
     </div>

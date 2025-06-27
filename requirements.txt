@@ -1,7 +1,15 @@
-Flask
-pandas
-numpy
-scikit-learn
-lime
-shap
-Gunicorn
+# Flask
+# pandas
+# numpy
+# scikit-learn
+# lime
+# shap
+# Gunicorn
+
+flask==2.3.3
+lime==0.2.0.1
+shap==0.44.1
+scikit-learn==1.4.2
+pandas==2.2.2
+numpy==1.26.4
+gunicorn
